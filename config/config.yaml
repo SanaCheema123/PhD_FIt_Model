@@ -1,0 +1,97 @@
+general:
+  seed: 42
+  device: cuda
+  num_workers: 8
+  save_dir: checkpoints/
+  log_dir: logs/
+
+data:
+  image_size: 224
+  batch_size: 16
+  coco:
+    train_annotation: data/coco/annotations/captions_train2017.json
+    val_annotation: data/coco/annotations/captions_val2017.json
+    train_image_dir: data/coco/train2017/
+    val_image_dir: data/coco/val2017/
+  refcoco:
+    data_root: data/refcoco/
+    split: unc
+  imagenet:
+    data_root: data/imagenet/
+  
+model:
+  backbone:
+    swin:
+      use: true
+      pretrained: true
+      embed_dim: 96
+      depths: [2, 2, 6, 2]
+      num_heads: [3, 6, 12, 24]
+    vit:
+      use: true
+      pretrained: true
+      model_size: base
+    resnet:
+      use: true
+      pretrained: true
+      depth: 50
+    cnn:
+      use: true
+      channels: [64, 128, 256, 512]
+  
+  fusion:
+    type: "hybrid"  # Options: concat, attention, hybrid
+    hidden_dim: 768
+    num_heads: 8
+    dropout: 0.1
+  
+  heads:
+    captioning:
+      vocab_size: 10000
+      max_seq_len: 20
+      embedding_dim: 512
+      hidden_dim: 512
+      num_layers: 3
+    grounding:
+      hidden_dim: 256
+      dropout: 0.1
+    segmentation:
+      decoder_dim: 256
+      mask_classification: true
+    classification:
+      num_classes: 1000
+      hidden_dim: 512
+    detection:
+      num_classes: 80
+      anchor_sizes: [32, 64, 128, 256, 512]
+      aspect_ratios: [0.5, 1.0, 2.0]
+
+training:
+  epochs: 50
+  lr: 0.0001
+  weight_decay: 0.0001
+  lr_scheduler: cosine
+  loss_weights:
+    captioning: 1.0
+    grounding: 1.0
+    segmentation: 1.0
+    classification: 1.0
+    detection: 1.0
+  task_sampling:
+    captioning: 0.2
+    grounding: 0.2
+    segmentation: 0.2
+    classification: 0.2
+    detection: 0.2
+
+evaluation:
+  captioning:
+    metrics: ["bleu4", "cider", "meteor"]
+  grounding:
+    metrics: ["iou", "accuracy@1"]
+  segmentation:
+    metrics: ["map", "dice"]
+  classification:
+    metrics: ["top1", "top5"]
+  detection:
+    metrics: ["map", "iou"]
